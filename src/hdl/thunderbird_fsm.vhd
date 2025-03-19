@@ -141,58 +141,79 @@ begin
         hazard <= i_left and i_right;
         next_state <= current_state;
         
-        if current_state = OFF_STATE then
-            if (i_left = '0' and i_right = '0') then next_state <= OFF_STATE;--stays in OFF
-            elsif (i_left = '0' and i_right = '1') then next_state <= R1_STATE; --right turn signal
-            elsif (i_left = '1' and i_right = '0') then next_state <= L1_STATE; --left turn signal
-            else next_state <= ON_STATE; --Hazard
+       if current_state = OFF_STATE then
+            if (i_left = '0' and i_right = '0') then
+                next_state <= OFF_STATE;
+            elsif (i_left = '0' and i_right = '1') then
+                next_state <= R1_STATE;
+            elsif (i_left = '1' and i_right = '0') then
+                next_state <= L1_STATE;
+            else
+                next_state <= ON_STATE;  -- Hazard condition
             end if;
             
         elsif current_state = ON_STATE then
-            if hazard = '1' then next_state <= ON_STATE; --stay in hazard state if both signals are still high
-            else next_state <= OFF_STATE; --Otherwise go to OFF
+            if hazard = '1' then
+                next_state <= ON_STATE;
+            else
+                next_state <= OFF_STATE;
             end if;
             
         elsif current_state = R1_STATE then
-            if hazard = '1' then next_state <= ON_STATE; --go to hazard if needed
-            else next_state <= R2_STATE; --continue right sequence
+            if hazard = '1' then
+                next_state <= ON_STATE;
+            else
+                next_state <= R2_STATE;
             end if;
             
         elsif current_state = R2_STATE then
-            if hazard = '1' then next_state <= ON_STATE;
-            else next_state <= R3_STATE;
+            if hazard = '1' then
+                next_state <= ON_STATE;
+            else
+                next_state <= R3_STATE;
             end if;
             
         elsif current_state = R3_STATE then
-            if hazard = '1' then next_state <= ON_STATE;
-            else next_state <= OFF_STATE;  --end of right sequence returns to OFF
+            if hazard = '1' then
+                next_state <= ON_STATE;
+            else
+                next_state <= OFF_STATE;
             end if;
             
         elsif current_state = L1_STATE then
-            if hazard = '1' then next_state <= ON_STATE;
-            else next_state <= L2_STATE;   --continue left sequence
+            if hazard = '1' then
+                next_state <= ON_STATE;
+            else
+                next_state <= L2_STATE;
             end if;
             
         elsif current_state = L2_STATE then
-            if hazard = '1' then next_state <= ON_STATE;
-            else next_state <= L3_STATE;
+            if hazard = '1' then
+                next_state <= ON_STATE;
+            else
+                next_state <= L3_STATE;
             end if;
             
         elsif current_state = L3_STATE then
-            if hazard = '1' then next_state <= ON_STATE;
-            else next_state <= OFF_STATE; --end of left sequence returns to OFF
+            if hazard = '1' then
+                next_state <= ON_STATE;
+            else
+                next_state <= OFF_STATE;
             end if;
             
         else
             next_state <= OFF_STATE;
-            
         end if;
     end process;
 
-    process(i_clk, i_reset)
+    process(i_clk)
     begin
-        if i_reset = '1' then current_state <= OFF_STATE;  --reset to OFF state
-        elsif rising_edge(i_clk) then current_state <= next_state;
+        if rising_edge(i_clk) then
+            if i_reset = '1' then
+                current_state <= OFF_STATE;
+            else
+                current_state <= next_state;
+            end if;
         end if;
     end process;
 
