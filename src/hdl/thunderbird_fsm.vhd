@@ -124,7 +124,7 @@ architecture thunderbird_fsm_arch of thunderbird_fsm is
     constant L2_STATE  : std_logic_vector(7 downto 0) := "00000010";
     constant L3_STATE  : std_logic_vector(7 downto 0) := "00000001";
 
-    signal current_state : std_logic_vector(7 downto 0);
+    signal current_state : std_logic_vector(7 downto 0) := OFF_STATE;
     signal next_state : std_logic_vector(7 downto 0);
     signal hazard : std_logic;
 
