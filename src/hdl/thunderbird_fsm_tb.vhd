@@ -145,5 +145,12 @@ begin
     end process;
 	
 	-----------------------------------------------------	
-	
+
 end test_bench;
+
+configuration tb_cfg of thunderbird_fsm_tb is
+   for test_bench
+      for uut: thunderbird_fsm use entity work.thunderbird_fsm(thunderbird_fsm_arch);
+      end for;
+   end for;
+end tb_cfg;
