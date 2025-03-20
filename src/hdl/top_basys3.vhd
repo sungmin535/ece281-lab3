@@ -138,12 +138,6 @@ begin
     led(15 downto 13) <= w_lights_L;
     led(2 downto 0)   <= w_lights_R(0) & w_lights_R(1) & w_lights_R(2);
     
-    
-
-
-
-
-
 	-- ground unused LEDs
 	-- leave unused switches UNCONNECTED
 	-- Ignore the warnings associated with these signals

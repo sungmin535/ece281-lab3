@@ -138,72 +138,80 @@ begin
 	-- PROCESSES --------------------------------------------------------------------
     process(current_state, i_left, i_right)
     begin
+        -- Detect hazard condition
         hazard <= i_left and i_right;
+        -- Default to hold state
         next_state <= current_state;
-        
-       if current_state = OFF_STATE then
-            if (i_left = '0' and i_right = '0') then
+
+        case current_state is
+            -- OFF State
+            when OFF_STATE =>
+                if (i_left = '0' and i_right = '0') then
+                    next_state <= OFF_STATE;
+                elsif (i_left = '1' and i_right = '0') then
+                    next_state <= L1_STATE;
+                elsif (i_left = '0' and i_right = '1') then
+                    next_state <= R1_STATE;
+                else
+                    next_state <= ON_STATE;  -- Hazard condition
+                end if;
+
+            -- ON (Hazard) State
+            when ON_STATE =>
+                if hazard = '1' then
+                    next_state <= ON_STATE;
+                else
+                    next_state <= OFF_STATE;
+                end if;
+
+            -- Right Turn States (R1 -> R2 -> R3 -> OFF)
+            when R1_STATE =>
+                if hazard = '1' then
+                    next_state <= ON_STATE;
+                else
+                    next_state <= R2_STATE;
+                end if;
+
+            when R2_STATE =>
+                if hazard = '1' then
+                    next_state <= ON_STATE;
+                else
+                    next_state <= R3_STATE;
+                end if;
+
+            when R3_STATE =>
+                if hazard = '1' then
+                    next_state <= ON_STATE;
+                else
+                    next_state <= OFF_STATE;
+                end if;
+
+            -- Left Turn States (L1 -> L2 -> L3 -> OFF)
+            when L1_STATE =>
+                if hazard = '1' then
+                    next_state <= ON_STATE;
+                else
+                    next_state <= L2_STATE;
+                end if;
+
+            when L2_STATE =>
+                if hazard = '1' then
+                    next_state <= ON_STATE;
+                else
+                    next_state <= L3_STATE;
+                end if;
+
+            when L3_STATE =>
+                if hazard = '1' then
+                    next_state <= ON_STATE;
+                else
+                    next_state <= OFF_STATE;
+                end if;
+
+            -- Safety net (should never get here)
+            when others =>
                 next_state <= OFF_STATE;
-            elsif (i_left = '0' and i_right = '1') then
-                next_state <= R1_STATE;
-            elsif (i_left = '1' and i_right = '0') then
-                next_state <= L1_STATE;
-            else
-                next_state <= ON_STATE;  -- Hazard condition
-            end if;
-            
-        elsif current_state = ON_STATE then
-            if hazard = '1' then
-                next_state <= ON_STATE;
-            else
-                next_state <= OFF_STATE;
-            end if;
-            
-        elsif current_state = R1_STATE then
-            if hazard = '1' then
-                next_state <= ON_STATE;
-            else
-                next_state <= R2_STATE;
-            end if;
-            
-        elsif current_state = R2_STATE then
-            if hazard = '1' then
-                next_state <= ON_STATE;
-            else
-                next_state <= R3_STATE;
-            end if;
-            
-        elsif current_state = R3_STATE then
-            if hazard = '1' then
-                next_state <= ON_STATE;
-            else
-                next_state <= OFF_STATE;
-            end if;
-            
-        elsif current_state = L1_STATE then
-            if hazard = '1' then
-                next_state <= ON_STATE;
-            else
-                next_state <= L2_STATE;
-            end if;
-            
-        elsif current_state = L2_STATE then
-            if hazard = '1' then
-                next_state <= ON_STATE;
-            else
-                next_state <= L3_STATE;
-            end if;
-            
-        elsif current_state = L3_STATE then
-            if hazard = '1' then
-                next_state <= ON_STATE;
-            else
-                next_state <= OFF_STATE;
-            end if;
-            
-        else
-            next_state <= OFF_STATE;
-        end if;
+        end case;
     end process;
 
     process(i_clk)
@@ -220,36 +228,48 @@ begin
     process(current_state)
     begin
         case current_state is
+
+            -- All lights off
             when OFF_STATE =>
-                o_lights_L <= "000"; --all left lights off
-                o_lights_R <= "000"; --all right lights off
+                o_lights_L <= "000";
+                o_lights_R <= "000";
+
+            -- Hazard: all lights on
             when ON_STATE =>
-                o_lights_L <= "111"; --all left lights on (hazard)
-                o_lights_R <= "111"; --all right lights on (hazard)
+                o_lights_L <= "111";
+                o_lights_R <= "111";
+
+            -- Right Turn Patterns
             when R1_STATE =>
-                o_lights_L <= "000"; --left lights off
-                o_lights_R <= "001";--Only RA on
+                o_lights_L <= "000";
+                o_lights_R <= "001"; -- RA on only
+
             when R2_STATE =>
                 o_lights_L <= "000";
-                o_lights_R <= "011"; --RA and RB on
+                o_lights_R <= "011"; -- RA, RB on
+
             when R3_STATE =>
                 o_lights_L <= "000";
-                o_lights_R <= "111"; --RA, RB, and RC on
+                o_lights_R <= "111"; -- RA, RB, RC on
+
+            -- Left Turn Patterns
             when L1_STATE =>
-                o_lights_L <= "001"; --Only LA on
+                o_lights_L <= "001"; -- LA on only
                 o_lights_R <= "000";
+
             when L2_STATE =>
-                o_lights_L <= "011"; --LA and LB on
+                o_lights_L <= "011"; -- LA, LB on
                 o_lights_R <= "000";
+
             when L3_STATE =>
-                o_lights_L <= "111"; --LA, LB, and LC on
+                o_lights_L <= "111"; -- LA, LB, LC on
                 o_lights_R <= "000";
+
+            -- Safety net
             when others =>
                 o_lights_L <= "000";
                 o_lights_R <= "000";
         end case;
     end process;
 
-	-----------------------------------------------------					   
-				  
 end thunderbird_fsm_arch;
