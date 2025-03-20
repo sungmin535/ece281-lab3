@@ -99,21 +99,22 @@
 ------------------------  
 
 library ieee;
-use ieee.std_logic_1164.all;
-use ieee.numeric_std.all;
-
+  use ieee.std_logic_1164.all;
+  use ieee.numeric_std.all;
+ 
 entity thunderbird_fsm is 
   port(
-    i_clk, i_reset  : in  std_logic;  -- 100 MHz clock, synchronous reset
-    i_left, i_right : in  std_logic;  -- turn signal inputs
-    o_lights_L      : out std_logic_vector(2 downto 0);  -- left taillights
-    o_lights_R      : out std_logic_vector(2 downto 0)   -- right taillights
+        i_clk, i_reset  : in    std_logic;
+        i_left, i_right : in    std_logic;
+        o_lights_L      : out   std_logic_vector(2 downto 0);
+        o_lights_R      : out   std_logic_vector(2 downto 0)
+	
   );
 end thunderbird_fsm;
 
 architecture thunderbird_fsm_arch of thunderbird_fsm is 
 
-    -- One-Hot State Encoding Constants
+-- CONSTANTS ------------------------------------------------------------------
     constant OFF_STATE : std_logic_vector(7 downto 0) := "10000000";
     constant ON_STATE  : std_logic_vector(7 downto 0) := "01000000";
     constant R1_STATE  : std_logic_vector(7 downto 0) := "00100000";
@@ -123,76 +124,80 @@ architecture thunderbird_fsm_arch of thunderbird_fsm is
     constant L2_STATE  : std_logic_vector(7 downto 0) := "00000010";
     constant L3_STATE  : std_logic_vector(7 downto 0) := "00000001";
 
-    -- Internal state signals
     signal current_state : std_logic_vector(7 downto 0) := OFF_STATE;
-    signal next_state    : std_logic_vector(7 downto 0);
-    signal hazard        : std_logic;
+    signal next_state : std_logic_vector(7 downto 0);
+    signal hazard : std_logic;
+
     
 begin
 
-    -- Next-State Combinational Process
+	-- CONCURRENT STATEMENTS --------------------------------------------------------	
+	
+    ---------------------------------------------------------------------------------
+	
+	-- PROCESSES --------------------------------------------------------------------
     process(current_state, i_left, i_right)
     begin
         hazard <= i_left and i_right;
-        next_state <= current_state;  -- default: hold state
-
-        if current_state = OFF_STATE then
-            if (i_left = '0' and i_right = '0') then 
+        next_state <= current_state;
+        
+       if current_state = OFF_STATE then
+            if (i_left = '0' and i_right = '0') then
                 next_state <= OFF_STATE;
-            elsif (i_left = '0' and i_right = '1') then 
+            elsif (i_left = '0' and i_right = '1') then
                 next_state <= R1_STATE;
-            elsif (i_left = '1' and i_right = '0') then 
+            elsif (i_left = '1' and i_right = '0') then
                 next_state <= L1_STATE;
-            else 
+            else
                 next_state <= ON_STATE;  -- Hazard condition
             end if;
             
         elsif current_state = ON_STATE then
-            if hazard = '1' then 
+            if hazard = '1' then
                 next_state <= ON_STATE;
-            else 
+            else
                 next_state <= OFF_STATE;
             end if;
             
         elsif current_state = R1_STATE then
-            if hazard = '1' then 
+            if hazard = '1' then
                 next_state <= ON_STATE;
-            else 
+            else
                 next_state <= R2_STATE;
             end if;
             
         elsif current_state = R2_STATE then
-            if hazard = '1' then 
+            if hazard = '1' then
                 next_state <= ON_STATE;
-            else 
+            else
                 next_state <= R3_STATE;
             end if;
             
         elsif current_state = R3_STATE then
-            if hazard = '1' then 
+            if hazard = '1' then
                 next_state <= ON_STATE;
-            else 
+            else
                 next_state <= OFF_STATE;
             end if;
             
         elsif current_state = L1_STATE then
-            if hazard = '1' then 
+            if hazard = '1' then
                 next_state <= ON_STATE;
-            else 
+            else
                 next_state <= L2_STATE;
             end if;
             
         elsif current_state = L2_STATE then
-            if hazard = '1' then 
+            if hazard = '1' then
                 next_state <= ON_STATE;
-            else 
+            else
                 next_state <= L3_STATE;
             end if;
             
         elsif current_state = L3_STATE then
-            if hazard = '1' then 
+            if hazard = '1' then
                 next_state <= ON_STATE;
-            else 
+            else
                 next_state <= OFF_STATE;
             end if;
             
@@ -201,45 +206,43 @@ begin
         end if;
     end process;
 
-    -- Synchronous Process (Synchronous Reset)
     process(i_clk)
     begin
         if rising_edge(i_clk) then
             if i_reset = '1' then
-                current_state <= OFF_STATE;  -- synchronously reset to OFF
+                current_state <= OFF_STATE;
             else
                 current_state <= next_state;
             end if;
         end if;
     end process;
 
-    -- Output Process: Outputs depend solely on current_state.
     process(current_state)
     begin
         case current_state is
             when OFF_STATE =>
-                o_lights_L <= "000";
-                o_lights_R <= "000";
+                o_lights_L <= "000"; --all left lights off
+                o_lights_R <= "000"; --all right lights off
             when ON_STATE =>
-                o_lights_L <= "111";
-                o_lights_R <= "111";
+                o_lights_L <= "111"; --all left lights on (hazard)
+                o_lights_R <= "111"; --all right lights on (hazard)
             when R1_STATE =>
-                o_lights_L <= "000";
-                o_lights_R <= "001";
+                o_lights_L <= "000"; --left lights off
+                o_lights_R <= "001";--Only RA on
             when R2_STATE =>
                 o_lights_L <= "000";
-                o_lights_R <= "011";
+                o_lights_R <= "011"; --RA and RB on
             when R3_STATE =>
                 o_lights_L <= "000";
-                o_lights_R <= "111";
+                o_lights_R <= "111"; --RA, RB, and RC on
             when L1_STATE =>
-                o_lights_L <= "001";
+                o_lights_L <= "001"; --Only LA on
                 o_lights_R <= "000";
             when L2_STATE =>
-                o_lights_L <= "011";
+                o_lights_L <= "011"; --LA and LB on
                 o_lights_R <= "000";
             when L3_STATE =>
-                o_lights_L <= "111";
+                o_lights_L <= "111"; --LA, LB, and LC on
                 o_lights_R <= "000";
             when others =>
                 o_lights_L <= "000";
@@ -247,4 +250,6 @@ begin
         end case;
     end process;
 
+	-----------------------------------------------------					   
+				  
 end thunderbird_fsm_arch;
