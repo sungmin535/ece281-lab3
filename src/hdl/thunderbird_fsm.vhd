@@ -105,9 +105,9 @@ use ieee.numeric_std.all;
 entity thunderbird_fsm is 
   port(
     i_clk, i_reset  : in  std_logic;  -- 100 MHz clock, synchronous reset
-    i_left, i_right : in  std_logic;  -- Turn signal inputs
-    o_lights_L      : out std_logic_vector(2 downto 0);  -- Left taillights
-    o_lights_R      : out std_logic_vector(2 downto 0)   -- Right taillights
+    i_left, i_right : in  std_logic;  -- turn signal inputs
+    o_lights_L      : out std_logic_vector(2 downto 0);  -- left taillights
+    o_lights_R      : out std_logic_vector(2 downto 0)   -- right taillights
   );
 end thunderbird_fsm;
 
@@ -133,25 +133,25 @@ begin
     -- Next-State Combinational Process
     process(current_state, i_left, i_right)
     begin
-        hazard <= i_left and i_right;  -- Hazard if both signals high
-        next_state <= current_state;   -- Default: hold state
+        hazard <= i_left and i_right;
+        next_state <= current_state;  -- default: hold state
 
         if current_state = OFF_STATE then
             if (i_left = '0' and i_right = '0') then 
-                next_state <= OFF_STATE;  -- Stay in OFF
+                next_state <= OFF_STATE;
             elsif (i_left = '0' and i_right = '1') then 
-                next_state <= R1_STATE;   -- Right turn
+                next_state <= R1_STATE;
             elsif (i_left = '1' and i_right = '0') then 
-                next_state <= L1_STATE;   -- Left turn
+                next_state <= L1_STATE;
             else 
-                next_state <= ON_STATE;   -- Hazard condition
+                next_state <= ON_STATE;  -- Hazard condition
             end if;
             
         elsif current_state = ON_STATE then
             if hazard = '1' then 
-                next_state <= ON_STATE;   -- Remain in hazard
+                next_state <= ON_STATE;
             else 
-                next_state <= OFF_STATE;  -- Go to OFF if hazard cleared
+                next_state <= OFF_STATE;
             end if;
             
         elsif current_state = R1_STATE then
@@ -172,7 +172,7 @@ begin
             if hazard = '1' then 
                 next_state <= ON_STATE;
             else 
-                next_state <= OFF_STATE;  -- End of right sequence
+                next_state <= OFF_STATE;
             end if;
             
         elsif current_state = L1_STATE then
@@ -193,7 +193,7 @@ begin
             if hazard = '1' then 
                 next_state <= ON_STATE;
             else 
-                next_state <= OFF_STATE;  -- End of left sequence
+                next_state <= OFF_STATE;
             end if;
             
         else
@@ -206,14 +206,14 @@ begin
     begin
         if rising_edge(i_clk) then
             if i_reset = '1' then
-                current_state <= OFF_STATE;  -- Synchronously reset to OFF
+                current_state <= OFF_STATE;  -- synchronously reset to OFF
             else
                 current_state <= next_state;
             end if;
         end if;
     end process;
 
-    -- Output Process: Outputs depend solely on current_state
+    -- Output Process: Outputs depend solely on current_state.
     process(current_state)
     begin
         case current_state is
