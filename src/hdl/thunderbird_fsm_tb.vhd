@@ -48,8 +48,8 @@
 --|
 --+----------------------------------------------------------------------------
 library ieee;
-  use ieee.std_logic_1164.all;
-  use ieee.numeric_std.all;
+use ieee.std_logic_1164.all;
+use ieee.numeric_std.all;
   
 entity thunderbird_fsm_tb is
 end thunderbird_fsm_tb;
@@ -94,105 +94,56 @@ begin
     -- Clock process ------------------------------------
     clk_proc: process
     begin
-        while True loop
-            w_clk <= '0';
-            wait for k_clk_period/2;
-            w_clk <= '1';
-            wait for k_clk_period/2;
-        end loop;
+        w_clk <= '0';
+        wait for k_clk_period/2;
+        w_clk <= '1';
+        wait for k_clk_period/2;
     end process clk_proc;
 	-----------------------------------------------------
 	
 	-- Test Plan Process --------------------------------
-    test_proc: process
+    sim_proc: process
     begin
-        ----------------------------------------------------------------------------
-        -- 1) Apply Reset
-        ----------------------------------------------------------------------------
-        -- Bring reset high to ensure FSM is in known OFF state.
         w_reset <= '1';
-        wait for k_clk_period*2;  -- Wait a few cycles
+        wait for k_clk_period*2;
         w_reset <= '0';
         wait for k_clk_period*2;
+        assert (w_lights_L = "000" and w_lights_R = "000") report "Reset test failed: Outputs not OFF" severity failure;
         
-        -- Check that outputs are OFF after reset
-        assert (w_lights_L = "000" and w_lights_R = "000") 
-            report "Reset test failed: FSM outputs not OFF after reset."
-            severity failure;
-
-        ----------------------------------------------------------------------------
-        -- 2) Right Turn Signal Test
-        ----------------------------------------------------------------------------
-        -- Drive i_right='1' for enough cycles to pass through R1->R2->R3->OFF
         w_left  <= '0';
-        w_right <= '1';
-        
-        -- Wait enough cycles so we can see R1->R2->R3->OFF pattern
-        -- (Number of cycles depends on your FSM delays; ensure it completes)
-        wait for k_clk_period*8;  
-        
-        -- Turn off i_right
-        w_right <= '0';
-        wait for k_clk_period*4;  -- Wait a few cycles to confirm final OFF
-        
-        assert (w_lights_R = "000") 
-            report "Right turn sequence test failed: Right lights not returned to OFF."
-            severity failure;
-
-        ----------------------------------------------------------------------------
-        -- 3) Left Turn Signal Test
-        ----------------------------------------------------------------------------
-        -- Drive i_left='1' for enough cycles to pass through L1->L2->L3->OFF
-        w_left  <= '1';
+        w_right <= '1'; --right turn signal
         wait for k_clk_period*8;
+        w_right <= '0';
+        wait for k_clk_period*4;
+        assert (w_lights_R = "000") report "Right turn sequence test failed: Right lights did not return to OFF" severity failure;
         
-        -- Turn off i_left
+        w_left  <= '1'; --left turn signal
+        w_right <= '0';
+        wait for k_clk_period*8;
         w_left  <= '0';
         wait for k_clk_period*4;
+        assert (w_lights_L = "000") report "Left turn sequence test failed Left lights did not return to OFF" severity failure;
         
-        assert (w_lights_L = "000") 
-            report "Left turn sequence test failed: Left lights not returned to OFF."
-            severity failure;
-
-        ----------------------------------------------------------------------------
-        -- 4) Hazard Test (Both Signals)
-        ----------------------------------------------------------------------------
-        -- Drive both i_left and i_right high for hazard mode (OFF <-> ON).
-        w_left  <= '1';
+        w_left  <= '1'; --hazard
         w_right <= '1';
-        wait for k_clk_period*6;  -- Observe hazard pattern toggles
-
-        -- Check that lights are ON at some point in hazard mode
-        assert (w_lights_L = "111" and w_lights_R = "111")
-            report "Hazard test failed: Lights not all ON during hazard."
-            severity failure;
-
-        ----------------------------------------------------------------------------
-        -- 5) Mid-Sequence Input Change
-        ----------------------------------------------------------------------------
-        -- Example: switch from hazard to right turn in the middle,
-        -- then quickly back to hazard. This checks if the FSM can 
-        -- properly handle 'immediate' changes. 
-        w_left <= '0';        -- Turn off left, still right='1'
-        wait for k_clk_period*3;  -- Let the FSM progress some
-        w_left <= '1';        -- Turn left back on -> hazard
+        wait for k_clk_period*6;
+        assert (w_lights_L = "111" and w_lights_R = "111") report "hazard test failed: Lights are not all ON" severity failure;
+        
+        --midsequence input change
+        w_left  <= '0';
+        w_right <= '1';
         wait for k_clk_period*3;
-
-        -- We expect hazard state again
-        assert (w_lights_L = "111" and w_lights_R = "111")
-            report "Midsequence change test failed: FSM did not return to hazard."
-            severity failure;
-
-        -- Turn off both signals
+        w_left <= '1';
+        wait for k_clk_period*3;
+        assert (w_lights_L = "111" and w_lights_R = "111") report "Midsequence change test failed: FSM did not enter hazard state" severity failure;
         w_left  <= '0';
         w_right <= '0';
         wait for k_clk_period*4;
+        
+        wait;
+    end process;
 
-        ----------------------------------------------------------------------------
-        -- End of Test
-        ----------------------------------------------------------------------------
-        report "All tests completed successfully." severity note;
-        wait;  -- Stop simulation
-    end process test_proc;
-
+	
+	-----------------------------------------------------	
+	
 end test_bench;

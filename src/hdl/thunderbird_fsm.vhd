@@ -138,13 +138,10 @@ begin
 	-- PROCESSES --------------------------------------------------------------------
     process(current_state, i_left, i_right)
     begin
-        -- Detect hazard condition
         hazard <= i_left and i_right;
-        -- Default to hold state
         next_state <= current_state;
 
         case current_state is
-            -- OFF State
             when OFF_STATE =>
                 if (i_left = '0' and i_right = '0') then
                     next_state <= OFF_STATE;
@@ -153,10 +150,9 @@ begin
                 elsif (i_left = '0' and i_right = '1') then
                     next_state <= R1_STATE;
                 else
-                    next_state <= ON_STATE;  -- Hazard condition
+                    next_state <= ON_STATE;
                 end if;
 
-            -- ON (Hazard) State
             when ON_STATE =>
                 if hazard = '1' then
                     next_state <= ON_STATE;
@@ -164,7 +160,6 @@ begin
                     next_state <= OFF_STATE;
                 end if;
 
-            -- Right Turn States (R1 -> R2 -> R3 -> OFF)
             when R1_STATE =>
                 if hazard = '1' then
                     next_state <= ON_STATE;
@@ -186,7 +181,6 @@ begin
                     next_state <= OFF_STATE;
                 end if;
 
-            -- Left Turn States (L1 -> L2 -> L3 -> OFF)
             when L1_STATE =>
                 if hazard = '1' then
                     next_state <= ON_STATE;
@@ -207,8 +201,6 @@ begin
                 else
                     next_state <= OFF_STATE;
                 end if;
-
-            -- Safety net (should never get here)
             when others =>
                 next_state <= OFF_STATE;
         end case;
