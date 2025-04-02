@@ -113,70 +113,40 @@ begin
 	process(current_state,i_left,i_right)
     begin
         hazard <= i_left and i_right;
-        next_state <= current_state; 
-
-        if current_state = OFF_STATE then
-            if (i_left = '0' and i_right = '0') then 
+        
+        if hazard = '1' then
+            if current_state = ON_STATE then
                 next_state <= OFF_STATE;
-            elsif (i_left = '0' and i_right = '1') then 
-                next_state <= R1_STATE;
-            elsif (i_left = '1' and i_right = '0') then 
-                next_state <= L1_STATE;
-            else 
-                next_state <= ON_STATE; 
-            end if;
-            
-        elsif current_state = ON_STATE then
-            if hazard = '1' then 
+            else
                 next_state <= ON_STATE;
-            else 
-                next_state <= OFF_STATE;
             end if;
-            
-        elsif current_state = R1_STATE then
-            if hazard = '1' then 
-                next_state <= ON_STATE;
-            else 
-                next_state <= R2_STATE;
-            end if;
-            
-        elsif current_state = R2_STATE then
-            if hazard = '1' then 
-                next_state <= ON_STATE;
-            else 
-                next_state <= R3_STATE;
-            end if;
-            
-        elsif current_state = R3_STATE then
-            if hazard = '1' then 
-                next_state <= ON_STATE;
-            else 
-                next_state <= OFF_STATE;
-            end if;
-            
-        elsif current_state = L1_STATE then
-            if hazard = '1' then 
-                next_state <= ON_STATE;
-            else 
-                next_state <= L2_STATE;
-            end if;
-            
-        elsif current_state = L2_STATE then
-            if hazard = '1' then 
-                next_state <= ON_STATE;
-            else 
-                next_state <= L3_STATE;
-            end if;
-            
-        elsif current_state = L3_STATE then
-            if hazard = '1' then 
-                next_state <= ON_STATE;
-            else 
-                next_state <= OFF_STATE;
-            end if;
-            
         else
-            next_state <= OFF_STATE;
+            next_state <= current_state; 
+            if current_state = OFF_STATE then
+                if (i_left = '0' and i_right = '0') then 
+                    next_state <= OFF_STATE;
+                elsif (i_left = '1' and i_right = '0') then 
+                    next_state <= L1_STATE;
+                elsif (i_left = '0' and i_right = '1') then 
+                    next_state <= R1_STATE;
+                else
+                    next_state <= ON_STATE;
+                end if;
+            elsif current_state = R1_STATE then
+                next_state <= R2_STATE;
+            elsif current_state = R2_STATE then
+                next_state <= R3_STATE;
+            elsif current_state = R3_STATE then
+                next_state <= OFF_STATE;
+            elsif current_state = L1_STATE then
+                next_state <= L2_STATE;
+            elsif current_state = L2_STATE then
+                next_state <= L3_STATE;
+            elsif current_state = L3_STATE then
+                next_state <= OFF_STATE;
+            else
+                next_state <= OFF_STATE;
+            end if;
         end if;
     end process;
 
@@ -208,12 +178,12 @@ begin
                 o_lights_R <= "011";
             when R3_STATE =>
                 o_lights_L <= "000";
-                o_lights_R <= "111";
+                o_lights_R <= "111"; 
             when L1_STATE =>
-                o_lights_L <= "001";
+                o_lights_L <= "001"; 
                 o_lights_R <= "000";
             when L2_STATE =>
-                o_lights_L <= "011"; 
+                o_lights_L <= "011";
                 o_lights_R <= "000";
             when L3_STATE =>
                 o_lights_L <= "111";
